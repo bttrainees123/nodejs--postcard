@@ -182,26 +182,32 @@ export const testRouters = (req,res)=>{
         res.send('this is protected')
 }
 //create post
-export const createPost = async(req,res)=>{
-   
+export const createPost = async (req, res) => {
     try {
-        console.log(req.file)
-         const {title,description } = req.body
-//image path 
-         const imagePath =req.file ? req.file.path :null;
-    const newPost = new PostCard({title,description,imageURL:req.file.originalname});
-    await newPost.save();
-    console.log(newPost)
-     return res.status(200).json({status:true,message:"post is created"})
+        if (!req.user) {
+            return res.status(403).json({ success: false, message: "Unauthorized: Login required" });
+        }
+
+        const { title, description } = req.body;
+        if (!title || !description) {
+            return res.status(400).json({ success: false, message: "Title and description are required" });
+        }
+
+        const newPost = new PostCard({
+            title,
+            description,
+            imageURL: req.file?.originalname || null,
+            user: req.user._id, // Associate post with the logged-in user
+        });
+
+        await newPost.save();
+        return res.status(201).json({ success: true, message: "Post created successfully", data: newPost });
     } catch (error) {
-        console.log(error)
-       return res.status(500).send({
-            success:false,
-            message:'Failed to create the post'
-        })
+        console.error(error);
+        return res.status(500).json({ success: false, message: "Failed to create post" });
     }
-   
-}
+};
+
 // Get posts
 export const getPosts = async (req, res) => {
     try {
@@ -230,34 +236,43 @@ export const getPostById = async (req, res) => {
 // Update post
 export const updatePost = async (req, res) => {
     try {
-        const { title, description } = req.body;
+        if (!req.user) {
+            return res.status(403).json({ success: false, message: "Unauthorized: Login required" });
+        }
 
+        const { title, description } = req.body;
         if (!title || !description) {
-            return res.status(400).json({ success: false, message: 'Title and description are required' });
+            return res.status(400).json({ success: false, message: "Title and description are required" });
         }
 
         const updatedPost = await PostCard.findByIdAndUpdate(req.params.id, { title, description }, { new: true });
         if (!updatedPost) {
-            return res.status(404).json({ success: false, message: 'Post not found' });
+            return res.status(404).json({ success: false, message: "Post not found" });
         }
+
         return res.status(200).json({ success: true, data: updatedPost });
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({ success: false, message: 'Failed to update post' });
+        console.error(error);
+        return res.status(500).json({ success: false, message: "Failed to update post" });
     }
 };
+
 
 // Delete post
 export const deletePost = async (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(403).json({ success: false, message: "Unauthorized: Login required" });
+        }
+
         const deletedPost = await PostCard.findByIdAndDelete(req.params.id);
         if (!deletedPost) {
-            return res.status(404).json({ success: false, message: 'Post not found' });
+            return res.status(404).json({ success: false, message: "Post not found" });
         }
-        return res.status(200).json({ success: true, message: 'Post deleted successfully' });
+
+        return res.status(200).json({ success: true, message: "Post deleted successfully" });
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({ success: false, message: 'Failed to delete post' });
+        console.error(error);
+        return res.status(500).json({ success: false, message: "Failed to delete post" });
     }
 };
-
