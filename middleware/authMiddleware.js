@@ -3,14 +3,20 @@ import userModel from '../models/userModel.js';
 
 //registration
 export const registerSignIn =async (req,res,next)=>{
-      try {
-        const decode = await JWT.verify(req.headers.authorization,process.env.JWT_SECRET);
-        
-        req.user =decode;
-        next();
-      } catch (error) {
-        console.log(`this error from rigesterSignIN middleware ${error}`)
-      }
+    try {
+        const token = req.headers.authorization?.split(" ")[1]; // Extract token from Authorization header
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: No token provided' });
+        }
+
+        // Verify token
+        const decoded = JWT.verify(token, process.env.JWT_SECRET);
+        req.user = decoded; // Attach user details to request
+        next(); // Proceed to next middleware or controller
+    } catch (error) {
+        console.error(error);
+        return res.status(401).json({ success: false, message: 'Unauthorized: Invalid token' });
+    }
 }
 export const isAdmin = async(req,res,next)=>{
     try {
@@ -44,7 +50,7 @@ export const authenticate = async (req, res, next) => {
             return res.status(401).json({ message: 'Token not provided' });
         }
 
-        const decoded = JWT.verify(token, process.env.SECRET_KEY);
+        const decoded = JWT.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
         next();
     } catch (error) {
