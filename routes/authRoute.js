@@ -32,7 +32,7 @@ router.post('/forget',forgetPasswordController)
 router.get('/middleware',registerSignIn,isAdmin, testRouters)
 
 // POST endpoint to create a new post
-router.post('/create', upload.single('imageURL'), createPost);
+router.post('/create',authenticate, upload.single('imageURL'), createPost);
 
 // GET endpoint to fetch all posts
 router.get('/posts', getPosts);
@@ -41,10 +41,10 @@ router.get('/posts', getPosts);
 router.get('/posts/:id', getPostById);
 
 // PUT endpoint to update a post
-router.put('/posts/:id', upload.single('imageURL'), updatePost);
+router.put('/posts/:id',authenticate, upload.single('imageURL'), updatePost);
 
 // DELETE endpoint to delete a post
-router.delete('/posts/:id', deletePost);
+router.delete('/posts/:id',authenticate, deletePost);
 
 
 export default router;
